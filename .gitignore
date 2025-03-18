@@ -1,0 +1,7 @@
+.vscode/
+node_modules/
+Páginas/
+Exemplo requisição octa/
+.env
+package.json
+package-lock.json

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Validador AFD Portaria 671" />
+    <meta name="keywords" content="afd, portaria, 671, rep-c" />
+    <meta name="author" content="Douglas Silva" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico?v=1" />
+    <title>Analisador AFD 671</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Analisador AFD 671</h1>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <label for="file" class="label-file">Escolher arquivo</label>
+        <input type="file" id="file" name="file" required onchange="updateFileName()" />
+        <span id="file-name">Nenhum arquivo selecionado</span>
+        <br />
+        <div class="button-group">
+          <button type="submit">Listar</button>
+          <button type="button" onclick="clearFile()">Limpar</button>
+        </div>
+      </form>
+
+      <div class="buttons">
+        <button data-tooltip="Exibe detalhes do arquivo ou registro" onclick="showDetails()">Detalhes</button>
+        <button data-tooltip="Registros do tipo 2 (Identificação da empresa no REP)" onclick="filterByType('2')">Tipo 2</button>
+        <button data-tooltip="Registros do tipo 3 (Marcação de ponto para REP-C e REP-A)" onclick="filterByType('3')">Tipo 3</button>
+        <button data-tooltip="Registros do tipo 4 (Ajuste do relógio)" onclick="filterByType('4')">Tipo 4</button>
+        <button data-tooltip="Registros do tipo 5 (Inclusão, alteração ou exclusão de empregado no REP)" onclick="filterByType('5')">Tipo 5</button>
+        <button data-tooltip="Registros do tipo 6 (Eventos sensíveis do REP)" onclick="filterByType('6')">Tipo 6</button>
+        <button data-tooltip="Linhas que não atendem a nenhum tipo" onclick="filterInvalidLines()">Linhas inválidas</button>
+        <button data-tooltip="Mostrar todos os registros" onclick="filterByType('all')">Todos</button>
+      </div>
+
+      <h2>Resultado</h2>
+      <pre id="resultado"></pre>
+    </div>
+
+    <script>
+      let registrosData = {};
+
+      // Mapeamento dos títulos completos para os tipos de registros
+      const tipoRegistroDescricao = {
+        1: 'Cabeçalho:',
+        2: 'Tipo 2: Registros do tipo 2 (Identificação da empresa no REP):',
+        3: 'Tipo 3: Registros do tipo 3 (Marcação de ponto para REP-C e REP-A):',
+        4: 'Tipo 4: Registros do tipo 4 (Ajuste do relógio):',
+        5: 'Tipo 5: Registros do tipo 5 (Inclusão, alteração ou exclusão de empregado no REP):',
+        6: 'Tipo 6: Registros do tipo 6 (Eventos sensíveis do REP):',
+      };
+
+      document.getElementById('uploadForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append('file', document.getElementById('file').files[0]);
+
+        fetch('http://10.1.2.28:56000/upload', {
+          method: 'POST',
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log('📌 Resposta completa do backend:', data); // 🔍 Verifica o que está vindo
+
+            // ✅ Armazena toda a resposta, incluindo registros e totalLinhas
+            registrosData = data;
+
+            // ✅ Exibe tudo por padrão ao enviar um arquivo
+            displayResult(data.registros);
+          })
+          .catch((error) => {
+            console.error('Erro:', error);
+          });
+      });
+
+      function updateFileName() {
+        const input = document.getElementById('file');
+        const fileName = document.getElementById('file-name');
+
+        if (input.files.length > 0) {
+          fileName.textContent = input.files[0].name; // Exibe o nome do arquivo escolhido
+        } else {
+          fileName.textContent = 'Nenhum arquivo selecionado';
+        }
+      }
+
+      // Função para limpar o arquivo e o resultado
+      function clearFile() {
+        const input = document.getElementById('file');
+        const fileName = document.getElementById('file-name');
+        const resultadoElement = document.getElementById('resultado');
+
+        // Limpa o campo de arquivo
+        input.value = '';
+        fileName.textContent = 'Nenhum arquivo selecionado';
+
+        // Limpa o campo de resultado
+        resultadoElement.textContent = '';
+
+        // Limpa os dados armazenados
+        registrosData = {};
+      }
+
+      function displayResult(data) {
+        const resultadoElement = document.getElementById('resultado');
+        let resultadoText = '';
+
+        for (const tipo in data) {
+          let registros = data[tipo];
+
+          if (!Array.isArray(registros)) {
+            console.warn(`📌 Tipo ${tipo} não é um array. Convertendo...`);
+            registros = Object.values(registros);
+          }
+
+          resultadoText += `${tipoRegistroDescricao[tipo] || `Tipo ${tipo}:`}\n`;
+
+          if (registros.length === 0) {
+            resultadoText += 'Nenhum registro encontrado.\n';
+          } else {
+            registros.forEach((linha) => {
+              resultadoText += linha + '\n';
+            });
+          }
+          resultadoText += '-'.repeat(40) + '\n';
+        }
+
+        resultadoElement.textContent = resultadoText.normalize('NFC');
+      }
+
+      function filterByType(tipo) {
+        if (!registrosData || !registrosData.registros) {
+          console.warn('📌 registrosData está indefinido ou não contém registros');
+          return;
+        }
+
+        let filteredData = {};
+
+        if (tipo === 'all') {
+          filteredData = registrosData.registros; // ✅ Mostra todos os registros
+        } else {
+          filteredData[tipo] = registrosData.registros[tipo] || []; // ✅ Filtra corretamente
+        }
+
+        displayResult(filteredData);
+      }
+
+      function showDetails() {
+        if (!registrosData || !registrosData.registros) {
+          console.warn('📌 registrosData está indefinido ou não contém registros');
+          return;
+        }
+
+        const detalhes = {
+          tipo2: 0,
+          tipo3: 0,
+          tipo4: 0,
+          tipo5: 0,
+          dataInicio: registrosData.dataInicio ? formatDate(registrosData.dataInicio) : 'Não disponível',
+          dataFim: registrosData.dataFim ? formatDate(registrosData.dataFim) : 'Não disponível',
+          totalLinhas: registrosData.totalLinhas || 0,
+          serialEquipamento: 'Não disponível', // Novo campo para o Nº Serial do equipamento
+        };
+
+        // Extrair o Nº Serial do equipamento do cabeçalho (Tipo 1)
+        if (registrosData.registros[1] && registrosData.registros[1].length > 0) {
+          const cabecalho = registrosData.registros[1][0]; // Primeiro registro do tipo 1
+          detalhes.serialEquipamento = cabecalho.substring(189, 206).trim(); // Posições 190-206
+        }
+
+        for (const tipo in registrosData.registros) {
+          let registros = registrosData.registros[tipo];
+
+          if (!Array.isArray(registros)) {
+            registros = Object.values(registros);
+          }
+
+          if (tipo == '2') detalhes.tipo2 = registros.length;
+          if (tipo == '3') detalhes.tipo3 = registros.length;
+          if (tipo == '4') detalhes.tipo4 = registros.length;
+          if (tipo == '5') detalhes.tipo5 = registros.length;
+        }
+
+        const resultadoElement = document.getElementById('resultado');
+        const detalhesText = `
+Detalhes do arquivo:
+----------------------------------------
+Quantidade de linhas no arquivo: ${detalhes.totalLinhas}
+Quantidade de registros Tipo 2 (Identificação da empresa no REP): ${detalhes.tipo2}
+Quantidade de registros Tipo 3 (Marcação de ponto para REP-C e REP-A): ${detalhes.tipo3}
+Quantidade de registros Tipo 4 (Ajuste do relógio): ${detalhes.tipo4}
+Quantidade de registros Tipo 5 (Inclusão, alteração ou exclusão de empregado no REP): ${detalhes.tipo5}
+
+Nº serial do equipamento: ${detalhes.serialEquipamento}
+Data de início dos eventos: ${detalhes.dataInicio}
+Data de fim dos eventos: ${detalhes.dataFim}
+  `;
+        resultadoElement.textContent = detalhesText;
+      }
+      // Função corrigida para formatar a data no formato dd-mm-yyyy
+      function formatDate(dateStr) {
+        if (!dateStr) return 'Data inválida';
+
+        // Cria a data com Date.UTC, para evitar o ajuste automático de fuso horário
+        const [year, month, day] = dateStr.split('-'); // Divide a data no formato YYYY-MM-DD
+        const dateObj = new Date(Date.UTC(year, month - 1, day)); // Mês começa do 0 em JavaScript
+
+        if (isNaN(dateObj)) return 'Data inválida'; // Verifica se a data é válida
+
+        const dayFormatted = String(dateObj.getUTCDate()).padStart(2, '0');
+        const monthFormatted = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); // Mês começa de 0
+        const yearFormatted = dateObj.getUTCFullYear();
+
+        return `${dayFormatted}-${monthFormatted}-${yearFormatted}`;
+      }
+
+      // Função para converter string de data para objeto Date
+      function parseDate(dataStr) {
+        const year = parseInt(dataStr.substring(0, 4), 10);
+        const month = parseInt(dataStr.substring(4, 6), 10) - 1; // Meses começam do 0
+        const day = parseInt(dataStr.substring(6, 8), 10);
+        return new Date(year, month, day);
+      }
+
+      // Função para filtrar e exibir as linhas inválidas
+      function filterInvalidLines() {
+        if (!registrosData || !registrosData.linhasInvalidas) {
+          console.warn('📌 registrosData.linhasInvalidas está indefinido ou não contém registros');
+          return;
+        }
+
+        // Obter as linhas inválidas retornadas pelo backend
+        const invalidLines = registrosData.linhasInvalidas;
+
+        // Limpa o conteúdo anterior antes de exibir as linhas inválidas
+        const resultadoElement = document.getElementById('resultado');
+        resultadoElement.textContent = ''; // Limpa qualquer texto anterior
+
+        // Exibir as linhas inválidas
+        let resultadoText = 'Linhas inválidas:\n';
+        if (invalidLines.length === 0) {
+          resultadoText += 'Nenhuma linha inválida encontrada.\n';
+        } else {
+          invalidLines.forEach((linha) => {
+            resultadoText += linha + '\n';
+          });
+        }
+
+        // Atualiza o conteúdo da div resultado com as linhas inválidas
+        resultadoElement.textContent = resultadoText;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 96%;
+  height: 96%;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+label {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+/* Esconder o input original */
+input[type='file'] {
+  display: none;
+}
+
+/* Criar um botão estilizado para substituir */
+.label-file {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  display: inline-block;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.label-file:hover {
+  background-color: #0056b3;
+}
+
+/* Mostrar o nome do arquivo selecionado */
+#file-name {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Estilo geral dos botões */
+button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Centralizar os botões de filtro */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* TOOLTIP (balão de informação nos botões) */
+button {
+  position: relative;
+}
+
+button::after {
+  content: attr(data-tooltip); /* Pega o texto do atributo data-tooltip */
+  position: absolute;
+  bottom: 120%; /* Posiciona o tooltip acima do botão */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Exibir tooltip ao passar o mouse */
+button:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+}
+
+pre {
+  background-color: #f7f7f7;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 550px;
+  overflow-y: auto;
+}
+
+/* Estilo para o grupo de botões */
+.button-group {
+  display: flex;
+  gap: 10px; /* Espaço entre os botões */
+  justify-content: center; /* Centraliza os botões horizontalmente */
+  margin-top: 10px; /* Espaço acima dos botões */
+}
