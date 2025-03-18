@@ -164,6 +164,7 @@
           dataFim: registrosData.dataFim ? formatDate(registrosData.dataFim) : 'Não disponível',
           totalLinhas: registrosData.totalLinhas || 0,
           serialEquipamento: 'Não disponível', // Novo campo para o Nº Serial do equipamento
+          ultimaAlteracaoEmpresa: registrosData.ultimaAlteracaoEmpresa || null, // Última alteração da empresa
         };
 
         // Extrair o Nº Serial do equipamento do cabeçalho (Tipo 1)
@@ -186,7 +187,7 @@
         }
 
         const resultadoElement = document.getElementById('resultado');
-        const detalhesText = `
+        let detalhesText = `
 Detalhes do arquivo:
 ----------------------------------------
 Quantidade de linhas no arquivo: ${detalhes.totalLinhas}
@@ -198,9 +199,21 @@ Quantidade de registros Tipo 5 (Inclusão, alteração ou exclusão de empregado
 Nº serial do equipamento: ${detalhes.serialEquipamento}
 Data de início dos eventos: ${detalhes.dataInicio}
 Data de fim dos eventos: ${detalhes.dataFim}
-  `;
+`;
+
+        // Adicionar informações da última alteração da empresa
+        if (detalhes.ultimaAlteracaoEmpresa) {
+          detalhesText += `
+Última alteração da empresa:
+Data e hora da gravação: ${detalhes.ultimaAlteracaoEmpresa.dataHoraGravacao}
+CNPJ/CPF do empregador: ${detalhes.ultimaAlteracaoEmpresa.cnpjCpfEmpregador}
+Razão social: ${detalhes.ultimaAlteracaoEmpresa.razaoSocial}
+`;
+        }
+
         resultadoElement.textContent = detalhesText;
       }
+
       // Função corrigida para formatar a data no formato dd-mm-yyyy
       function formatDate(dateStr) {
         if (!dateStr) return 'Data inválida';

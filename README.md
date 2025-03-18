@@ -21,6 +21,7 @@ O projeto consiste em uma aplicação web que permite o upload de um arquivo AFD
   - Quantidade de registros por tipo.
   - Número serial do equipamento.
   - Data de início e fim dos eventos registrados.
+  - Última alteração de empresa.
 
 ## Como usar
 

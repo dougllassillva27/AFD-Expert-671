@@ -86,6 +86,17 @@ app.post('/upload', upload.single('file'), (req, res) => {
     dataFim = cabecalho.substring(216, 226); // Posições 217-226
   }
 
+  // Extrair a última alteração da empresa (Tipo 2)
+  let ultimaAlteracaoEmpresa = null;
+  if (registros[2] && registros[2].length > 0) {
+    const ultimaLinhaTipo2 = registros[2][registros[2].length - 1]; // Última linha do Tipo 2
+    ultimaAlteracaoEmpresa = {
+      dataHoraGravacao: ultimaLinhaTipo2.substring(10, 34).trim(), // Posições 11-34
+      cnpjCpfEmpregador: ultimaLinhaTipo2.substring(49, 63).trim(), // Posições 50-63
+      razaoSocial: ultimaLinhaTipo2.substring(77, 227).trim(), // Posições 78-227
+    };
+  }
+
   return res.json({
     descricao: 'Todos os tipos de registros:',
     registros: registros,
@@ -93,6 +104,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     totalLinhas: req.file.buffer.toString().split(/\r?\n/).length,
     dataInicio: dataInicio,
     dataFim: dataFim,
+    ultimaAlteracaoEmpresa: ultimaAlteracaoEmpresa, // Adicionando a última alteração da empresa
   });
 });
 
