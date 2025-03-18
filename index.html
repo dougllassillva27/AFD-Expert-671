@@ -26,6 +26,7 @@
 
       <div class="buttons">
         <button data-tooltip="Exibe detalhes do arquivo ou registro" onclick="showDetails()">Detalhes</button>
+        <button data-tooltip="Mostrar todos os registros" onclick="filterByType('all')">Todos</button>
         <button data-tooltip="Registros do tipo 2 (Identificação da empresa no REP)" onclick="filterByType('2')">Tipo 2</button>
         <button data-tooltip="Registros do tipo 3 (Marcação de ponto para REP-C e REP-A)" onclick="filterByType('3')">Tipo 3</button>
         <button data-tooltip="Registros do tipo 4 (Ajuste do relógio)" onclick="filterByType('4')">Tipo 4</button>
@@ -33,7 +34,6 @@
         <button data-tooltip="Registros do tipo 6 (Eventos sensíveis do REP)" onclick="filterByType('6')">Tipo 6</button>
         <button data-tooltip="Linhas que não atendem a nenhum tipo" onclick="filterInvalidLines()">Linhas inválidas</button>
         <button data-tooltip="Pesquisar dentro do arquivo carregado" onclick="toggleSearch()">Pesquisar</button>
-        <button data-tooltip="Mostrar todos os registros" onclick="filterByType('all')">Todos</button>
       </div>
 
       <h2>Resultado</h2>

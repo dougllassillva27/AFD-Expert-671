@@ -137,3 +137,43 @@ pre {
   justify-content: center; /* Centraliza os botões horizontalmente */
   margin-top: 10px; /* Espaço acima dos botões */
 }
+
+#searchInput {
+  padding: 5px;
+  margin-left: 10px;
+  width: 200px;
+}
+
+#searchButton {
+  padding: 5px 10px;
+  margin-left: 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#searchButton:hover {
+  background-color: #0056b3;
+}
+
+#searchArea {
+  margin-bottom: 20px;
+}
+
+#searchArea input {
+  padding: 5px;
+  width: 200px;
+}
+
+#searchArea button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#searchArea button:hover {
+  background-color: #0056b3;
+}
