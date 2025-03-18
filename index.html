@@ -33,6 +33,7 @@
         <button data-tooltip="Registros do tipo 5 (Inclusão, alteração ou exclusão de empregado no REP)" onclick="filterByType('5')">Tipo 5</button>
         <button data-tooltip="Registros do tipo 6 (Eventos sensíveis do REP)" onclick="filterByType('6')">Tipo 6</button>
         <button data-tooltip="Linhas que não atendem a nenhum tipo" onclick="filterInvalidLines()">Linhas inválidas</button>
+        <button data-tooltip="Mostrar interpretação detalhada das linhas" onclick="showInterpretedLines()">Linhas interpretadas</button>
         <button data-tooltip="Pesquisar dentro do arquivo carregado" onclick="toggleSearch()">Pesquisar</button>
       </div>
 
@@ -354,6 +355,77 @@ Razão social: ${detalhes.ultimaAlteracaoEmpresa.razaoSocial}
           performSearch(); // Chama a função de pesquisa
         }
       });
+
+      function showInterpretedLines() {
+        hideSearchArea();
+        if (!registrosData || !registrosData.registros) {
+          console.warn('Nenhum arquivo carregado.');
+          return;
+        }
+
+        const resultadoElement = document.getElementById('resultado');
+        let todasLinhas = [];
+
+        // Coletar todas as linhas de todos os tipos em um array
+        for (const tipo in registrosData.registros) {
+          registrosData.registros[tipo].forEach((linha) => {
+            todasLinhas.push(linha);
+          });
+        }
+
+        // Ordenar linhas pelo NSR (primeiros 9 caracteres)
+        todasLinhas.sort((a, b) => {
+          const nsrA = parseInt(a.substring(0, 9), 10);
+          const nsrB = parseInt(b.substring(0, 9), 10);
+          return nsrA - nsrB;
+        });
+
+        // Processar cada linha na ordem sequencial
+        let interpretadas = '';
+        todasLinhas.forEach((linha) => {
+          const tipo = linha.substring(9, 10); // Extrai o tipo da posição 10
+          interpretadas += interpretarLinha(linha, tipo) + '\n';
+        });
+
+        resultadoElement.textContent = interpretadas;
+      }
+
+      // Mantenha a função interpretarLinha e formatarDataHora como antes
+
+      function interpretarLinha(linha, tipo) {
+        let descricao = `NSR: ${linha.substring(0, 9).trim()} - Tipo: `;
+
+        switch (tipo) {
+          case '1':
+            descricao += `Cabeçalho - Data Início: ${linha.substring(206, 216)} | Data Fim: ${linha.substring(216, 226)}`;
+            break;
+          case '2':
+            descricao += `Identificação Empresa - Razão Social: ${linha.substring(77, 227).trim()} | CNPJ: ${linha.substring(49, 63).trim()}`;
+            break;
+          case '3':
+            descricao += `Marcação Ponto - Data: ${formatarDataHora(linha.substring(10, 34))} | CPF: ${linha.substring(34, 46).trim()}`;
+            break;
+          case '4':
+            descricao += `Ajuste Relógio - Antes: ${formatarDataHora(linha.substring(10, 34))} | Após: ${formatarDataHora(linha.substring(34, 58))}`;
+            break;
+          case '5':
+            const operacao = linha.substring(34, 35) === 'I' ? 'Inclusão' : linha.substring(34, 35) === 'A' ? 'Alteração' : 'Exclusão';
+            descricao += `${operacao} Funcionário - Nome: ${linha.substring(47, 99).trim()} | CPF: ${linha.substring(35, 47).trim()}`;
+            break;
+          case '6':
+            descricao += `Evento Sensível - Tipo ${linha.substring(34, 36)} | ${formatarDataHora(linha.substring(10, 34))}`;
+            break;
+          default:
+            descricao += 'Registro desconhecido';
+        }
+
+        return descricao;
+      }
+
+      function formatarDataHora(dataHoraStr) {
+        const [data, tempo] = dataHoraStr.split('T');
+        return `${data.split('-').reverse().join('/')} ${tempo.substring(0, 8)}`;
+      }
     </script>
   </body>
 </html>

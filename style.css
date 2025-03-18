@@ -177,3 +177,7 @@ pre {
 #searchArea button:hover {
   background-color: #0056b3;
 }
+
+.buttons button {
+  margin: 2px; /* Ajuste conforme necessário */
+}
