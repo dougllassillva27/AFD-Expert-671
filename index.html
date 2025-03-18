@@ -32,29 +32,73 @@
         <button data-tooltip="Registros do tipo 5 (Inclusão, alteração ou exclusão de empregado no REP)" onclick="filterByType('5')">Tipo 5</button>
         <button data-tooltip="Registros do tipo 6 (Eventos sensíveis do REP)" onclick="filterByType('6')">Tipo 6</button>
         <button data-tooltip="Linhas que não atendem a nenhum tipo" onclick="filterInvalidLines()">Linhas inválidas</button>
+        <button data-tooltip="Pesquisar dentro do arquivo carregado" onclick="toggleSearch()">Pesquisar</button>
         <button data-tooltip="Mostrar todos os registros" onclick="filterByType('all')">Todos</button>
       </div>
 
       <h2>Resultado</h2>
+
+      <div id="searchArea" style="display: none">
+        <input type="text" id="searchInput" placeholder="Digite o termo de pesquisa" />
+        <button id="searchButton" onclick="performSearch()">Buscar</button>
+      </div>
       <pre id="resultado"></pre>
     </div>
 
     <script>
       let registrosData = {};
 
+      // Função para ocultar o campo de pesquisa
+      function hideSearchArea() {
+        const searchArea = document.getElementById('searchArea');
+        searchArea.style.display = 'none';
+      }
+
+      // Função para alternar a visibilidade do campo de pesquisa
+      function toggleSearch() {
+        console.log('Função toggleSearch chamada.');
+
+        const searchArea = document.getElementById('searchArea'); // Captura a área de pesquisa
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultadoElement = document.getElementById('resultado'); // Captura a área de resultados
+
+        console.log('searchArea:', searchArea);
+        console.log('searchInput:', searchInput);
+        console.log('searchButton:', searchButton);
+        console.log('resultadoElement:', resultadoElement);
+
+        if (searchArea && searchInput && searchButton && resultadoElement) {
+          // Alterna a visibilidade da área de pesquisa
+          if (searchArea.style.display === 'none' || searchArea.style.display === '') {
+            searchArea.style.display = 'block'; // Exibe a área de pesquisa
+            searchInput.style.display = 'inline-block'; // Exibe o campo de pesquisa
+            searchButton.style.display = 'inline-block'; // Exibe o botão de busca
+
+            // Limpa o conteúdo da área de resultados
+            resultadoElement.textContent = '';
+          } else {
+            searchArea.style.display = 'none'; // Oculta a área de pesquisa
+            searchInput.style.display = 'none'; // Oculta o campo de pesquisa
+            searchButton.style.display = 'none'; // Oculta o botão de busca
+          }
+        } else {
+          console.error('Elementos searchArea, searchInput, searchButton ou resultadoElement não encontrados no DOM.');
+        }
+      }
+
       // Função para formatar data no formato dd-mm-yyyy
       function formatDate(dateStr) {
-        console.log('Data recebida:', dateStr); // Log para depuração
+        console.log('Data recebida:', dateStr);
         if (!dateStr) return 'Data inválida';
 
-        // Cria a data com Date.UTC, para evitar o ajuste automático de fuso horário
-        const [year, month, day] = dateStr.split('-'); // Divide a data no formato YYYY-MM-DD
-        const dateObj = new Date(Date.UTC(year, month - 1, day)); // Mês começa do 0 em JavaScript
+        const [year, month, day] = dateStr.split('-');
+        const dateObj = new Date(Date.UTC(year, month - 1, day));
 
-        if (isNaN(dateObj)) return 'Data inválida'; // Verifica se a data é válida
+        if (isNaN(dateObj)) return 'Data inválida';
 
         const dayFormatted = String(dateObj.getUTCDate()).padStart(2, '0');
-        const monthFormatted = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); // Mês começa de 0
+        const monthFormatted = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
         const yearFormatted = dateObj.getUTCFullYear();
 
         return `${dayFormatted}-${monthFormatted}-${yearFormatted}`;
@@ -62,21 +106,16 @@
 
       // Função para formatar data e hora no formato dd-mm-yyyy HH:MM:SS (sem fuso horário)
       function formatDateTime(dateTimeStr) {
-        console.log('Data e hora recebida:', dateTimeStr); // Log para depuração
+        console.log('Data e hora recebida:', dateTimeStr);
         if (!dateTimeStr) return 'Data e hora inválida';
 
-        // Divide a string em data e hora
         const [datePart, timePart] = dateTimeStr.split('T');
         if (!datePart || !timePart) return 'Data e hora inválida';
 
-        // Divide a data em ano, mês e dia
         const [year, month, day] = datePart.split('-');
         if (!year || !month || !day) return 'Data e hora inválida';
 
-        // Remove o fuso horário da parte do tempo
-        const timeWithoutTimezone = timePart.split('-')[0]; // Remove tudo após o '-'
-
-        // Retorna no formato dd-mm-yyyy HH:MM:SS (sem fuso horário)
+        const timeWithoutTimezone = timePart.split('-')[0];
         return `${day}-${month}-${year} ${timeWithoutTimezone}`;
       }
 
@@ -102,12 +141,8 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log('📌 Resposta completa do backend:', data); // 🔍 Verifica o que está vindo
-
-            // ✅ Armazena toda a resposta, incluindo registros e totalLinhas
+            console.log('📌 Resposta completa do backend:', data);
             registrosData = data;
-
-            // ✅ Exibe tudo por padrão ao enviar um arquivo
             displayResult(data.registros);
           })
           .catch((error) => {
@@ -120,7 +155,7 @@
         const fileName = document.getElementById('file-name');
 
         if (input.files.length > 0) {
-          fileName.textContent = input.files[0].name; // Exibe o nome do arquivo escolhido
+          fileName.textContent = input.files[0].name;
         } else {
           fileName.textContent = 'Nenhum arquivo selecionado';
         }
@@ -128,18 +163,14 @@
 
       // Função para limpar o arquivo e o resultado
       function clearFile() {
+        hideSearchArea(); // Oculta o campo de pesquisa
         const input = document.getElementById('file');
         const fileName = document.getElementById('file-name');
         const resultadoElement = document.getElementById('resultado');
 
-        // Limpa o campo de arquivo
         input.value = '';
         fileName.textContent = 'Nenhum arquivo selecionado';
-
-        // Limpa o campo de resultado
         resultadoElement.textContent = '';
-
-        // Limpa os dados armazenados
         registrosData = {};
       }
 
@@ -171,6 +202,7 @@
       }
 
       function filterByType(tipo) {
+        hideSearchArea(); // Oculta o campo de pesquisa
         if (!registrosData || !registrosData.registros) {
           console.warn('📌 registrosData está indefinido ou não contém registros');
           return;
@@ -179,15 +211,39 @@
         let filteredData = {};
 
         if (tipo === 'all') {
-          filteredData = registrosData.registros; // ✅ Mostra todos os registros
+          filteredData = registrosData.registros;
         } else {
-          filteredData[tipo] = registrosData.registros[tipo] || []; // ✅ Filtra corretamente
+          filteredData[tipo] = registrosData.registros[tipo] || [];
         }
 
         displayResult(filteredData);
       }
 
+      function filterInvalidLines() {
+        hideSearchArea(); // Oculta o campo de pesquisa
+        if (!registrosData || !registrosData.linhasInvalidas) {
+          console.warn('📌 registrosData.linhasInvalidas está indefinido ou não contém registros');
+          return;
+        }
+
+        const invalidLines = registrosData.linhasInvalidas;
+        const resultadoElement = document.getElementById('resultado');
+        resultadoElement.textContent = '';
+
+        let resultadoText = 'Linhas inválidas:\n';
+        if (invalidLines.length === 0) {
+          resultadoText += 'Nenhuma linha inválida encontrada.\n';
+        } else {
+          invalidLines.forEach((linha) => {
+            resultadoText += linha + '\n';
+          });
+        }
+
+        resultadoElement.textContent = resultadoText;
+      }
+
       function showDetails() {
+        hideSearchArea(); // Oculta o campo de pesquisa
         if (!registrosData || !registrosData.registros) {
           console.warn('📌 registrosData está indefinido ou não contém registros');
           return;
@@ -200,16 +256,15 @@
           tipo5: 0,
           dataInicio: registrosData.dataInicio ? formatDate(registrosData.dataInicio) : 'Não disponível',
           dataFim: registrosData.dataFim ? formatDate(registrosData.dataFim) : 'Não disponível',
-          dataHoraGeracao: registrosData.dataHoraGeracao ? formatDateTime(registrosData.dataHoraGeracao) : 'Não disponível', // Formatar data e hora
+          dataHoraGeracao: registrosData.dataHoraGeracao ? formatDateTime(registrosData.dataHoraGeracao) : 'Não disponível',
           totalLinhas: registrosData.totalLinhas || 0,
-          serialEquipamento: 'Não disponível', // Novo campo para o Nº Serial do equipamento
-          ultimaAlteracaoEmpresa: registrosData.ultimaAlteracaoEmpresa || null, // Última alteração da empresa
+          serialEquipamento: 'Não disponível',
+          ultimaAlteracaoEmpresa: registrosData.ultimaAlteracaoEmpresa || null,
         };
 
-        // Extrair o Nº Serial do equipamento do cabeçalho (Tipo 1)
         if (registrosData.registros[1] && registrosData.registros[1].length > 0) {
-          const cabecalho = registrosData.registros[1][0]; // Primeiro registro do tipo 1
-          detalhes.serialEquipamento = cabecalho.substring(189, 206).trim(); // Posições 190-206
+          const cabecalho = registrosData.registros[1][0];
+          detalhes.serialEquipamento = cabecalho.substring(189, 206).trim();
         }
 
         for (const tipo in registrosData.registros) {
@@ -241,7 +296,6 @@ Data de início dos eventos: ${detalhes.dataInicio}
 Data de fim dos eventos: ${detalhes.dataFim}
 `;
 
-        // Adicionar informações da última alteração da empresa
         if (detalhes.ultimaAlteracaoEmpresa) {
           detalhesText += `
 Última alteração da empresa:
@@ -254,41 +308,52 @@ Razão social: ${detalhes.ultimaAlteracaoEmpresa.razaoSocial}
         resultadoElement.textContent = detalhesText;
       }
 
-      // Função para converter string de data para objeto Date
-      function parseDate(dataStr) {
-        const year = parseInt(dataStr.substring(0, 4), 10);
-        const month = parseInt(dataStr.substring(4, 6), 10) - 1; // Meses começam do 0
-        const day = parseInt(dataStr.substring(6, 8), 10);
-        return new Date(year, month, day);
-      }
+      // Função para realizar a pesquisa
+      function performSearch() {
+        console.log('Função performSearch chamada.');
 
-      // Função para filtrar e exibir as linhas inválidas
-      function filterInvalidLines() {
-        if (!registrosData || !registrosData.linhasInvalidas) {
-          console.warn('📌 registrosData.linhasInvalidas está indefinido ou não contém registros');
+        const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+        console.log('Termo de pesquisa:', searchTerm);
+
+        if (!searchTerm) {
+          console.warn('Nenhum termo de pesquisa digitado.');
+          alert('Por favor, digite um termo para pesquisar.');
           return;
         }
 
-        // Obter as linhas inválidas retornadas pelo backend
-        const invalidLines = registrosData.linhasInvalidas;
+        if (!registrosData || !registrosData.registros) {
+          console.warn('Nenhum arquivo carregado para pesquisar.');
+          alert('Nenhum arquivo carregado para pesquisar.');
+          return;
+        }
 
-        // Limpa o conteúdo anterior antes de exibir as linhas inválidas
-        const resultadoElement = document.getElementById('resultado');
-        resultadoElement.textContent = ''; // Limpa qualquer texto anterior
+        const filteredData = {};
+        console.log('Dados carregados:', registrosData.registros);
 
-        // Exibir as linhas inválidas
-        let resultadoText = 'Linhas inválidas:\n';
-        if (invalidLines.length === 0) {
-          resultadoText += 'Nenhuma linha inválida encontrada.\n';
-        } else {
-          invalidLines.forEach((linha) => {
-            resultadoText += linha + '\n';
+        for (const tipo in registrosData.registros) {
+          filteredData[tipo] = registrosData.registros[tipo].filter((linha) => {
+            console.log('Linha:', linha);
+            return linha.toLowerCase().includes(searchTerm);
           });
         }
 
-        // Atualiza o conteúdo da div resultado com as linhas inválidas
-        resultadoElement.textContent = resultadoText;
+        console.log('Dados filtrados:', filteredData);
+        displayResult(filteredData); // Exibe os resultados filtrados
       }
+
+      // Captura o campo de pesquisa
+      const searchInput = document.getElementById('searchInput');
+
+      // Adiciona um event listener para o evento "keydown"
+      searchInput.addEventListener('keydown', function (event) {
+        console.log('Tecla pressionada:', event.key);
+
+        // Verifica se a tecla pressionada foi "Enter" (código 13)
+        if (event.key === 'Enter') {
+          console.log('Enter pressionado. Executando pesquisa...');
+          performSearch(); // Chama a função de pesquisa
+        }
+      });
     </script>
   </body>
 </html>
