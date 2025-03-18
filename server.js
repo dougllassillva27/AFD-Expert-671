@@ -79,11 +79,13 @@ app.post('/upload', upload.single('file'), (req, res) => {
   // Garantir que o cabeçalho (Tipo 1) existe
   let dataInicio = null;
   let dataFim = null;
+  let dataHoraGeracao = null; // Novo campo para data e hora da geração do arquivo
 
   if (registros[1] && registros[1].length > 0) {
     const cabecalho = registros[1][0]; // Primeiro registro do tipo 1
     dataInicio = cabecalho.substring(206, 216); // Posições 207-216
     dataFim = cabecalho.substring(216, 226); // Posições 217-226
+    dataHoraGeracao = cabecalho.substring(226, 250).trim(); // Posições 227-250
   }
 
   // Extrair a última alteração da empresa (Tipo 2)
@@ -102,9 +104,10 @@ app.post('/upload', upload.single('file'), (req, res) => {
     registros: registros,
     linhasInvalidas: linhasInvalidas, // Incluindo as linhas inválidas na resposta
     totalLinhas: req.file.buffer.toString().split(/\r?\n/).length,
-    dataInicio: dataInicio,
-    dataFim: dataFim,
-    ultimaAlteracaoEmpresa: ultimaAlteracaoEmpresa, // Adicionando a última alteração da empresa
+    dataInicio: dataInicio, // Data de início dos eventos
+    dataFim: dataFim, // Data de fim dos eventos
+    dataHoraGeracao: dataHoraGeracao, // Data e hora da geração do arquivo
+    ultimaAlteracaoEmpresa: ultimaAlteracaoEmpresa, // Última alteração da empresa
   });
 });
 
