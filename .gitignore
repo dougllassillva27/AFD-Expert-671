@@ -1,7 +1,6 @@
 .vscode/
 node_modules/
-Páginas/
-Exemplo requisição octa/
+Funcional/
 .env
 package.json
 package-lock.json
