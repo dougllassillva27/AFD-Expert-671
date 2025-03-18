@@ -15,6 +15,7 @@ O projeto consiste em uma aplicação web que permite o upload de um arquivo AFD
   - **Tipo 5**: Inclusão, alteração ou exclusão de empregado no REP.
   - **Tipo 6**: Eventos sensíveis do REP.
 - **Filtragem de registros**: Permite filtrar os registros por tipo, facilitando a visualização de informações específicas.
+- **Filtragem de dados**: Permite filtrar por termos de pesquisa (CPF, nome da empresa e etc).
 - **Detecção de linhas inválidas**: Identifica e exibe linhas que não seguem o padrão esperado no arquivo AFD.
 - **Detalhes do arquivo**: Exibe informações gerais sobre o arquivo, como:
   - Número total de linhas.
