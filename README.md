@@ -7,6 +7,12 @@ O projeto consiste em uma aplicação web que permite o upload de um arquivo AFD
 ## Funcionalidades
 
 - **Upload de arquivo AFD**: Permite o upload de um arquivo AFD no formato texto.
+- **Detalhes do arquivo**: Exibe informações gerais sobre o arquivo, como:
+  - Número total de linhas.
+  - Quantidade de registros por tipo.
+  - Número serial do equipamento.
+  - Data de início e fim dos eventos registrados.
+  - Última alteração de empresa.
 - **Análise de registros**: Classifica os registros do arquivo AFD em diferentes tipos, conforme a Portaria 671:
   - **Tipo 1**: Cabeçalho do arquivo.
   - **Tipo 2**: Identificação da empresa no REP.
@@ -14,15 +20,9 @@ O projeto consiste em uma aplicação web que permite o upload de um arquivo AFD
   - **Tipo 4**: Ajuste do relógio.
   - **Tipo 5**: Inclusão, alteração ou exclusão de empregado no REP.
   - **Tipo 6**: Eventos sensíveis do REP.
-- **Filtragem de registros**: Permite filtrar os registros por tipo, facilitando a visualização de informações específicas.
-- **Filtragem de dados**: Permite filtrar por termos de pesquisa (CPF, nome da empresa, NSR e etc).
 - **Detecção de linhas inválidas**: Identifica e exibe linhas que não seguem o padrão esperado no arquivo AFD.
-- **Detalhes do arquivo**: Exibe informações gerais sobre o arquivo, como:
-  - Número total de linhas.
-  - Quantidade de registros por tipo.
-  - Número serial do equipamento.
-  - Data de início e fim dos eventos registrados.
-  - Última alteração de empresa.
+- **Linhas Interpretadas**: Identifica e exibe as linhas do arquivo AFD de acordo com o seu tipo (Tipo 1, Tipo 2, Tipo 3, etc.), fornecendo uma interpretação detalhada e legível de cada registro. Isso facilita a análise e o entendimento dos dados contidos no arquivo.
+- **Filtragem de dados**: Permite filtrar por termos de pesquisa (CPF, nome da empresa, NSR e etc).
 
 ## Como usar
 
