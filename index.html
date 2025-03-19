@@ -47,80 +47,16 @@
     </div>
 
     <script>
+      const dom = {
+        resultado: document.getElementById('resultado'),
+        searchArea: document.getElementById('searchArea'),
+        searchInput: document.getElementById('searchInput'),
+        searchButton: document.getElementById('searchButton'),
+        fileInput: document.getElementById('file'),
+        fileName: document.getElementById('file-name'),
+      };
+
       let registrosData = {};
-
-      // Função para ocultar o campo de pesquisa
-      function hideSearchArea() {
-        const searchArea = document.getElementById('searchArea');
-        searchArea.style.display = 'none';
-      }
-
-      // Função para alternar a visibilidade do campo de pesquisa
-      function toggleSearch() {
-        console.log('Função toggleSearch chamada.');
-
-        const searchArea = document.getElementById('searchArea'); // Captura a área de pesquisa
-        const searchInput = document.getElementById('searchInput');
-        const searchButton = document.getElementById('searchButton');
-        const resultadoElement = document.getElementById('resultado'); // Captura a área de resultados
-
-        console.log('searchArea:', searchArea);
-        console.log('searchInput:', searchInput);
-        console.log('searchButton:', searchButton);
-        console.log('resultadoElement:', resultadoElement);
-
-        if (searchArea && searchInput && searchButton && resultadoElement) {
-          // Alterna a visibilidade da área de pesquisa
-          if (searchArea.style.display === 'none' || searchArea.style.display === '') {
-            searchArea.style.display = 'block'; // Exibe a área de pesquisa
-            searchInput.style.display = 'inline-block'; // Exibe o campo de pesquisa
-            searchButton.style.display = 'inline-block'; // Exibe o botão de busca
-
-            // Limpa o conteúdo da área de resultados
-            resultadoElement.textContent = '';
-          } else {
-            searchArea.style.display = 'none'; // Oculta a área de pesquisa
-            searchInput.style.display = 'none'; // Oculta o campo de pesquisa
-            searchButton.style.display = 'none'; // Oculta o botão de busca
-          }
-        } else {
-          console.error('Elementos searchArea, searchInput, searchButton ou resultadoElement não encontrados no DOM.');
-        }
-      }
-
-      // Função para formatar data no formato dd-mm-yyyy
-      function formatDate(dateStr) {
-        console.log('Data recebida:', dateStr);
-        if (!dateStr) return 'Data inválida';
-
-        const [year, month, day] = dateStr.split('-');
-        const dateObj = new Date(Date.UTC(year, month - 1, day));
-
-        if (isNaN(dateObj)) return 'Data inválida';
-
-        const dayFormatted = String(dateObj.getUTCDate()).padStart(2, '0');
-        const monthFormatted = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-        const yearFormatted = dateObj.getUTCFullYear();
-
-        return `${dayFormatted}-${monthFormatted}-${yearFormatted}`;
-      }
-
-      // Função para formatar data e hora no formato dd-mm-yyyy HH:MM:SS (sem fuso horário)
-      function formatDateTime(dateTimeStr) {
-        console.log('Data e hora recebida:', dateTimeStr);
-        if (!dateTimeStr) return 'Data e hora inválida';
-
-        const [datePart, timePart] = dateTimeStr.split('T');
-        if (!datePart || !timePart) return 'Data e hora inválida';
-
-        const [year, month, day] = datePart.split('-');
-        if (!year || !month || !day) return 'Data e hora inválida';
-
-        const timeWithoutTimezone = timePart.split('-')[0];
-        return `${day}-${month}-${year} ${timeWithoutTimezone}`;
-      }
-
-      // Mapeamento dos títulos completos para os tipos de registros
       const tipoRegistroDescricao = {
         1: 'Cabeçalho:',
         2: 'Tipo 2: Registros do tipo 2 (Identificação da empresa no REP):',
@@ -130,158 +66,90 @@
         6: 'Tipo 6: Registros do tipo 6 (Eventos sensíveis do REP):',
       };
 
-      document.getElementById('uploadForm').addEventListener('submit', function (event) {
-        event.preventDefault();
+      // Funções de formatação completas
+      function formatDate(dateStr) {
+        if (!dateStr) return 'Não disponível';
+        const [y, m, d] = dateStr.split('-');
+        return d && m && y ? `${d.padStart(2, '0')}-${m.padStart(2, '0')}-${y}` : 'Inválida';
+      }
 
+      function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return 'Não disponível';
+        const [datePart, timePart] = dateTimeStr.split('T');
+        return datePart && timePart ? `${datePart.split('-').reverse().join('/')} ${timePart.substring(0, 8)}` : 'Inválido';
+      }
+
+      // Upload completo
+      document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
         const formData = new FormData();
-        formData.append('file', document.getElementById('file').files[0]);
+        formData.append('file', dom.fileInput.files[0]);
 
-        fetch('http://10.1.2.28:56000/upload', {
-          method: 'POST',
-          body: formData,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log('📌 Resposta completa do backend:', data);
-            registrosData = data;
-            displayResult(data.registros);
-          })
-          .catch((error) => {
-            console.error('Erro:', error);
+        try {
+          const response = await fetch('http://10.1.2.28:56000/upload', {
+            method: 'POST',
+            body: formData,
           });
+          registrosData = await response.json();
+          displayResult(registrosData.registros);
+        } catch (error) {
+          console.error('Erro:', error);
+        }
       });
 
-      function updateFileName() {
-        const input = document.getElementById('file');
-        const fileName = document.getElementById('file-name');
-
-        if (input.files.length > 0) {
-          fileName.textContent = input.files[0].name;
-        } else {
-          fileName.textContent = 'Nenhum arquivo selecionado';
-        }
-      }
-
-      // Função para limpar o arquivo e o resultado
-      function clearFile() {
-        hideSearchArea(); // Oculta o campo de pesquisa
-        const input = document.getElementById('file');
-        const fileName = document.getElementById('file-name');
-        const resultadoElement = document.getElementById('resultado');
-
-        input.value = '';
-        fileName.textContent = 'Nenhum arquivo selecionado';
-        resultadoElement.textContent = '';
-        registrosData = {};
-      }
-
+      // Exibição de resultados completa
       function displayResult(data) {
-        const resultadoElement = document.getElementById('resultado');
-        let resultadoText = '';
-
+        const chunks = [];
         for (const tipo in data) {
-          let registros = data[tipo];
-
-          if (!Array.isArray(registros)) {
-            console.warn(`📌 Tipo ${tipo} não é um array. Convertendo...`);
-            registros = Object.values(registros);
-          }
-
-          resultadoText += `${tipoRegistroDescricao[tipo] || `Tipo ${tipo}:`}\n`;
-
-          if (registros.length === 0) {
-            resultadoText += 'Nenhum registro encontrado.\n';
-          } else {
-            registros.forEach((linha) => {
-              resultadoText += linha + '\n';
-            });
-          }
-          resultadoText += '-'.repeat(40) + '\n';
+          chunks.push(`${tipoRegistroDescricao[tipo] || `Tipo ${tipo}:`}\n`);
+          const registros = Array.isArray(data[tipo]) ? data[tipo] : Object.values(data[tipo]);
+          registros.length > 0 ? chunks.push(...registros.map((linha) => `${linha}\n`)) : chunks.push('Nenhum registro encontrado.\n');
+          chunks.push('-'.repeat(40) + '\n');
         }
-
-        resultadoElement.textContent = resultadoText.normalize('NFC');
+        dom.resultado.textContent = chunks.join('');
       }
 
+      // Funções de filtro completas
       function filterByType(tipo) {
-        hideSearchArea(); // Oculta o campo de pesquisa
-        if (!registrosData || !registrosData.registros) {
-          console.warn('📌 registrosData está indefinido ou não contém registros');
-          return;
-        }
-
-        let filteredData = {};
-
-        if (tipo === 'all') {
-          filteredData = registrosData.registros;
-        } else {
-          filteredData[tipo] = registrosData.registros[tipo] || [];
-        }
-
+        dom.searchArea.style.display = 'none';
+        const filteredData = tipo === 'all' ? registrosData.registros : { [tipo]: registrosData.registros[tipo] || [] };
         displayResult(filteredData);
       }
 
       function filterInvalidLines() {
-        hideSearchArea(); // Oculta o campo de pesquisa
-        if (!registrosData || !registrosData.linhasInvalidas) {
-          console.warn('📌 registrosData.linhasInvalidas está indefinido ou não contém registros');
-          return;
-        }
+        dom.searchArea.style.display = 'none';
+        if (!registrosData?.linhasInvalidas) return;
 
-        const invalidLines = registrosData.linhasInvalidas;
-        const resultadoElement = document.getElementById('resultado');
-        resultadoElement.textContent = '';
-
-        let resultadoText = 'Linhas inválidas:\n';
-        if (invalidLines.length === 0) {
-          resultadoText += 'Nenhuma linha inválida encontrada.\n';
-        } else {
-          invalidLines.forEach((linha) => {
-            resultadoText += linha + '\n';
-          });
-        }
-
-        resultadoElement.textContent = resultadoText;
+        const texto = registrosData.linhasInvalidas.length > 0 ? `Linhas inválidas:\n${registrosData.linhasInvalidas.join('\n')}` : 'Nenhuma linha inválida encontrada';
+        dom.resultado.textContent = texto;
       }
 
       function showDetails() {
-        hideSearchArea(); // Oculta o campo de pesquisa
-        if (!registrosData || !registrosData.registros) {
-          console.warn('📌 registrosData está indefinido ou não contém registros');
-          return;
-        }
+        dom.searchArea.style.display = 'none';
+        if (!registrosData?.registros) return;
 
+        const cabecalho = registrosData.registros[1]?.[0] || '';
         const detalhes = {
+          dataHoraGeracao: formatDateTime(registrosData.dataHoraGeracao),
+          totalLinhas: registrosData.totalLinhas,
+          serialEquipamento: cabecalho.substring(189, 206).trim(),
+          dataInicio: formatDate(registrosData.dataInicio),
+          dataFim: formatDate(registrosData.dataFim),
           tipo2: 0,
           tipo3: 0,
           tipo4: 0,
           tipo5: 0,
-          dataInicio: registrosData.dataInicio ? formatDate(registrosData.dataInicio) : 'Não disponível',
-          dataFim: registrosData.dataFim ? formatDate(registrosData.dataFim) : 'Não disponível',
-          dataHoraGeracao: registrosData.dataHoraGeracao ? formatDateTime(registrosData.dataHoraGeracao) : 'Não disponível',
-          totalLinhas: registrosData.totalLinhas || 0,
-          serialEquipamento: 'Não disponível',
-          ultimaAlteracaoEmpresa: registrosData.ultimaAlteracaoEmpresa || null,
         };
 
-        if (registrosData.registros[1] && registrosData.registros[1].length > 0) {
-          const cabecalho = registrosData.registros[1][0];
-          detalhes.serialEquipamento = cabecalho.substring(189, 206).trim();
-        }
-
+        // Contagem dos registros
         for (const tipo in registrosData.registros) {
-          let registros = registrosData.registros[tipo];
-
-          if (!Array.isArray(registros)) {
-            registros = Object.values(registros);
-          }
-
-          if (tipo == '2') detalhes.tipo2 = registros.length;
-          if (tipo == '3') detalhes.tipo3 = registros.length;
-          if (tipo == '4') detalhes.tipo4 = registros.length;
-          if (tipo == '5') detalhes.tipo5 = registros.length;
+          const t = parseInt(tipo, 10);
+          if (t === 2) detalhes.tipo2 = registrosData.registros[tipo].length;
+          if (t === 3) detalhes.tipo3 = registrosData.registros[tipo].length;
+          if (t === 4) detalhes.tipo4 = registrosData.registros[tipo].length;
+          if (t === 5) detalhes.tipo5 = registrosData.registros[tipo].length;
         }
 
-        const resultadoElement = document.getElementById('resultado');
         let detalhesText = `
 Detalhes do arquivo:
 ----------------------------------------
@@ -297,100 +165,47 @@ Data de início dos eventos: ${detalhes.dataInicio}
 Data de fim dos eventos: ${detalhes.dataFim}
 `;
 
-        if (detalhes.ultimaAlteracaoEmpresa) {
+        if (registrosData.ultimaAlteracaoEmpresa) {
           detalhesText += `
 Última alteração da empresa:
-Data e hora da gravação: ${formatDateTime(detalhes.ultimaAlteracaoEmpresa.dataHoraGravacao)}
-CNPJ/CPF do empregador: ${detalhes.ultimaAlteracaoEmpresa.cnpjCpfEmpregador}
-Razão social: ${detalhes.ultimaAlteracaoEmpresa.razaoSocial}
+Data e hora da gravação: ${formatDateTime(registrosData.ultimaAlteracaoEmpresa.dataHoraGravacao)}
+CNPJ/CPF do empregador: ${registrosData.ultimaAlteracaoEmpresa.cnpjCpfEmpregador}
+Razão social: ${registrosData.ultimaAlteracaoEmpresa.razaoSocial}
 `;
         }
 
-        resultadoElement.textContent = detalhesText;
+        dom.resultado.textContent = detalhesText;
       }
 
-      // Função para realizar a pesquisa
+      // Pesquisa completa
       function performSearch() {
-        console.log('Função performSearch chamada.');
-
-        const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-        console.log('Termo de pesquisa:', searchTerm);
-
-        if (!searchTerm) {
-          console.warn('Nenhum termo de pesquisa digitado.');
-          alert('Por favor, digite um termo para pesquisar.');
+        const termo = dom.searchInput.value.trim().toLowerCase();
+        if (!termo) {
+          alert('Digite um termo para pesquisar');
           return;
         }
 
-        if (!registrosData || !registrosData.registros) {
-          console.warn('Nenhum arquivo carregado para pesquisar.');
-          alert('Nenhum arquivo carregado para pesquisar.');
-          return;
-        }
-
-        const filteredData = {};
-        console.log('Dados carregados:', registrosData.registros);
-
+        const resultados = {};
         for (const tipo in registrosData.registros) {
-          filteredData[tipo] = registrosData.registros[tipo].filter((linha) => {
-            console.log('Linha:', linha);
-            return linha.toLowerCase().includes(searchTerm);
-          });
+          resultados[tipo] = registrosData.registros[tipo].filter((linha) => linha.toLowerCase().includes(termo));
         }
-
-        console.log('Dados filtrados:', filteredData);
-        displayResult(filteredData); // Exibe os resultados filtrados
+        displayResult(resultados);
       }
-
-      // Captura o campo de pesquisa
-      const searchInput = document.getElementById('searchInput');
-
-      // Adiciona um event listener para o evento "keydown"
-      searchInput.addEventListener('keydown', function (event) {
-        console.log('Tecla pressionada:', event.key);
-
-        // Verifica se a tecla pressionada foi "Enter" (código 13)
-        if (event.key === 'Enter') {
-          console.log('Enter pressionado. Executando pesquisa...');
-          performSearch(); // Chama a função de pesquisa
-        }
-      });
 
       function showInterpretedLines() {
-        hideSearchArea();
-        if (!registrosData || !registrosData.registros) {
-          console.warn('Nenhum arquivo carregado.');
-          return;
-        }
+        if (!registrosData?.registros) return;
 
-        const resultadoElement = document.getElementById('resultado');
-        let todasLinhas = [];
+        const todasLinhas = Object.values(registrosData.registros)
+          .flat()
+          .sort((a, b) => parseInt(a.substring(0, 9), 10) - parseInt(b.substring(0, 9), 10));
 
-        // Coletar todas as linhas de todos os tipos em um array
-        for (const tipo in registrosData.registros) {
-          registrosData.registros[tipo].forEach((linha) => {
-            todasLinhas.push(linha);
-          });
-        }
-
-        // Ordenar linhas pelo NSR (primeiros 9 caracteres)
-        todasLinhas.sort((a, b) => {
-          const nsrA = parseInt(a.substring(0, 9), 10);
-          const nsrB = parseInt(b.substring(0, 9), 10);
-          return nsrA - nsrB;
-        });
-
-        // Processar cada linha na ordem sequencial
-        let interpretadas = '';
-        todasLinhas.forEach((linha) => {
-          const tipo = linha.substring(9, 10); // Extrai o tipo da posição 10
-          interpretadas += interpretarLinha(linha, tipo) + '\n';
-        });
-
-        resultadoElement.textContent = interpretadas;
+        dom.resultado.textContent = todasLinhas
+          .map((linha) => {
+            const tipo = linha.substring(9, 10);
+            return interpretarLinha(linha, tipo);
+          })
+          .join('\n');
       }
-
-      // Mantenha a função interpretarLinha e formatarDataHora como antes
 
       function interpretarLinha(linha, tipo) {
         let descricao = `NSR: ${linha.substring(0, 9).trim()} - Tipo: `;
@@ -400,7 +215,7 @@ Razão social: ${detalhes.ultimaAlteracaoEmpresa.razaoSocial}
             descricao += `Cabeçalho - Data Início: ${linha.substring(206, 216)} | Data Fim: ${linha.substring(216, 226)}`;
             break;
           case '2':
-            descricao += `Identificação Empresa - Razão Social: ${linha.substring(77, 227).trim()} | CNPJ: ${linha.substring(49, 63).trim()}`;
+            descricao += `Alteração Empresa - Razão Social: ${linha.substring(77, 227).trim()} | CNPJ: ${linha.substring(49, 63).trim()}`;
             break;
           case '3':
             descricao += `Marcação Ponto - Data: ${formatarDataHora(linha.substring(10, 34))} | CPF: ${linha.substring(34, 46).trim()}`;
@@ -426,6 +241,28 @@ Razão social: ${detalhes.ultimaAlteracaoEmpresa.razaoSocial}
         const [data, tempo] = dataHoraStr.split('T');
         return `${data.split('-').reverse().join('/')} ${tempo.substring(0, 8)}`;
       }
+
+      // Funções auxiliares completas
+      function toggleSearch() {
+        dom.searchArea.style.display = dom.searchArea.style.display === 'none' ? 'block' : 'none';
+        dom.resultado.textContent = '';
+      }
+
+      function updateFileName() {
+        dom.fileName.textContent = dom.fileInput.files[0]?.name || 'Nenhum arquivo selecionado';
+      }
+
+      function clearFile() {
+        dom.fileInput.value = '';
+        dom.fileName.textContent = 'Nenhum arquivo selecionado';
+        dom.resultado.textContent = '';
+        registrosData = {};
+      }
+
+      // Event listeners
+      dom.searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') performSearch();
+      });
     </script>
   </body>
 </html>

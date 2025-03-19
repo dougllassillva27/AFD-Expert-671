@@ -1,113 +1,95 @@
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const iconv = require('iconv-lite'); // Biblioteca para conversão de codificação
+const iconv = require('iconv-lite');
 
 const app = express();
 const port = 56000;
 
 app.use(cors());
-
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
 function listarRegistros(arquivo) {
   const registros = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-  let linhasInvalidas = new Set(); // Usando um Set para armazenar linhas inválidas e evitar duplicatas
+  const linhasInvalidas = new Set();
+  let data;
 
-  // 🔥 Converte para UTF-8 corretamente, mesmo que o arquivo tenha outra codificação
-  let data = iconv.decode(arquivo, 'utf-8');
-
-  // Se ainda houver caracteres estranhos, tenta ISO-8859-1 (Windows-1252)
-  if (data.includes('�')) {
-    console.log('Detectado erro de codificação. Tentando converter para ISO-8859-1...');
-    data = iconv.decode(arquivo, 'latin1'); // Alternativa para acentuação errada
+  // Detecção de codificação otimizada
+  try {
+    data = iconv.decode(arquivo, 'utf-8');
+    if (data.includes('�')) data = iconv.decode(arquivo, 'latin1');
+  } catch (e) {
+    console.error('Erro na decodificação:', e);
+    return { registros, linhasInvalidas: [], totalLinhas: 0 };
   }
 
-  // Trata as quebras de linha tanto de CRLF (\r\n) quanto de LF (\n)
-  const linhas = data.split(/\r?\n/); // Isso pega ambos CRLF e LF como quebra de linha
+  const linhas = data.split(/\r?\n/);
+  let ultimaSequencia = null;
 
-  let totalLinhas = 0;
-  let ultimaSequencia = null; // Variável para armazenar o valor da última linha válida
+  for (let i = 0; i < linhas.length; i++) {
+    const linha = linhas[i].trim();
+    if (!linha) continue;
 
-  linhas.forEach((linha, index) => {
-    totalLinhas++;
+    const nsr = linha.substring(0, 9);
+    const tipo = linha.substring(9, 10);
+    const numeroLinha = parseInt(nsr, 10);
 
-    if (linha.trim()) {
-      // Verifica se a linha não está vazia
-      const tipoRegistro = linha.substring(9, 10); // Obtém o tipo de registro
-      const numeroLinha = parseInt(linha.substring(0, 9), 10); // Pega a sequência numérica da linha
-
-      // Valida a sequência das linhas
-      if (ultimaSequencia !== null && numeroLinha !== ultimaSequencia + 1) {
-        linhasInvalidas.add(linha.trim()); // Adiciona a linha inválida ao Set
-      }
-
-      // Atualiza a última sequência
-      ultimaSequencia = numeroLinha;
-
-      // Adiciona o cabeçalho (Tipo 1) e os demais registros corretamente
-      if (tipoRegistro === '1' && index === 0) {
-        registros[1].push(linha.trim()); // Garante que o cabeçalho seja armazenado
-      } else if (registros[tipoRegistro]) {
-        registros[tipoRegistro].push(linha.trim());
-      } else {
-        // Caso o tipo não seja válido (não seja 2, 3, 4, 5 ou 6), adiciona à lista de linhas inválidas
-        linhasInvalidas.add(linha.trim());
-      }
+    // Validação sequencial completa
+    if (ultimaSequencia !== null && numeroLinha !== ultimaSequencia + 1) {
+      linhasInvalidas.add(linha);
     }
-  });
+    ultimaSequencia = numeroLinha;
 
-  console.log('Total de linhas no arquivo:', totalLinhas);
+    // Lógica original completa
+    if (tipo === '1' && i === 0) {
+      registros[1].push(linha);
+    } else if (registros[tipo]) {
+      registros[tipo].push(linha);
+    } else {
+      linhasInvalidas.add(linha);
+    }
+  }
 
-  return { registros, linhasInvalidas: Array.from(linhasInvalidas) }; // Converte o Set de volta para um array
+  return {
+    registros,
+    linhasInvalidas: Array.from(linhasInvalidas),
+    totalLinhas: linhas.length,
+  };
 }
 
 app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ erro: 'Nenhum arquivo foi enviado.' });
+  if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+  if (!req.file.mimetype.includes('text')) {
+    return res.status(400).json({ erro: 'Arquivo não é texto válido' });
   }
 
-  // Verificar o tipo do arquivo
-  const tipoArquivo = req.file.mimetype;
-  if (!tipoArquivo.includes('text')) {
-    return res.status(400).json({ erro: 'O arquivo enviado não é um arquivo de texto válido.' });
-  }
+  const { registros, linhasInvalidas, totalLinhas } = listarRegistros(req.file.buffer);
+  const cabecalho = registros[1]?.[0] || '';
 
-  const { registros, linhasInvalidas } = listarRegistros(req.file.buffer);
+  // Extração completa dos dados do cabeçalho
+  const dataInicio = cabecalho.substring(206, 216);
+  const dataFim = cabecalho.substring(216, 226);
+  const dataHoraGeracao = cabecalho.substring(226, 250).trim();
 
-  // Garantir que o cabeçalho (Tipo 1) existe
-  let dataInicio = null;
-  let dataFim = null;
-  let dataHoraGeracao = null; // Novo campo para data e hora da geração do arquivo
+  // Processamento completo do Tipo 2
+  const ultimoTipo2 = registros[2]?.slice(-1)[0];
+  const ultimaAlteracaoEmpresa = ultimoTipo2
+    ? {
+        dataHoraGravacao: ultimoTipo2.substring(10, 34).trim(),
+        cnpjCpfEmpregador: ultimoTipo2.substring(49, 63).trim(),
+        razaoSocial: ultimoTipo2.substring(77, 227).trim(),
+      }
+    : null;
 
-  if (registros[1] && registros[1].length > 0) {
-    const cabecalho = registros[1][0]; // Primeiro registro do tipo 1
-    dataInicio = cabecalho.substring(206, 216); // Posições 207-216
-    dataFim = cabecalho.substring(216, 226); // Posições 217-226
-    dataHoraGeracao = cabecalho.substring(226, 250).trim(); // Posições 227-250
-  }
-
-  // Extrair a última alteração da empresa (Tipo 2)
-  let ultimaAlteracaoEmpresa = null;
-  if (registros[2] && registros[2].length > 0) {
-    const ultimaLinhaTipo2 = registros[2][registros[2].length - 1]; // Última linha do Tipo 2
-    ultimaAlteracaoEmpresa = {
-      dataHoraGravacao: ultimaLinhaTipo2.substring(10, 34).trim(), // Posições 11-34
-      cnpjCpfEmpregador: ultimaLinhaTipo2.substring(49, 63).trim(), // Posições 50-63
-      razaoSocial: ultimaLinhaTipo2.substring(77, 227).trim(), // Posições 78-227
-    };
-  }
-
-  return res.json({
-    descricao: 'Todos os tipos de registros:',
-    registros: registros,
-    linhasInvalidas: linhasInvalidas, // Incluindo as linhas inválidas na resposta
-    totalLinhas: req.file.buffer.toString().split(/\r?\n/).length,
-    dataInicio: dataInicio, // Data de início dos eventos
-    dataFim: dataFim, // Data de fim dos eventos
-    dataHoraGeracao: dataHoraGeracao, // Data e hora da geração do arquivo
-    ultimaAlteracaoEmpresa: ultimaAlteracaoEmpresa, // Última alteração da empresa
+  res.json({
+    registros,
+    linhasInvalidas,
+    totalLinhas,
+    dataInicio,
+    dataFim,
+    dataHoraGeracao,
+    ultimaAlteracaoEmpresa,
   });
 });
 
