@@ -1,5 +1,7 @@
 # Analisador de Arquivo AFD Portaria 671
 
+![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
+
 Este repositório contém um projeto que analisa e valida arquivos AFD (Arquivo Fonte de Dados) conforme a Portaria 671. O AFD é um arquivo gerado por equipamentos de registro de ponto (REP-C) e contém informações sobre as marcações de ponto dos funcionários, ajustes de relógio, eventos sensíveis, entre outros dados.
 
 O projeto consiste em uma aplicação web que permite o upload de um arquivo AFD, realiza a análise do conteúdo e exibe os registros de forma organizada, além de identificar linhas inválidas e fornecer detalhes sobre o arquivo.
