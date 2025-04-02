@@ -137,6 +137,36 @@ button:hover::after {
   visibility: visible;
 }
 
+/* Estilo para o botão "Listar" */
+.btn-listar {
+  background-color: #28a745; /* Azul */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-listar:hover {
+  background-color: #218838; /* Azul mais escuro no hover */
+}
+
+/* Estilo para o botão "Limpar" */
+.btn-limpar {
+  background-color: #ff0000; /* Cinza */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-limpar:hover {
+  background-color: #d20000; /* Cinza mais escuro no hover */
+}
+
 h2 {
   text-align: center;
   color: #333;
@@ -203,4 +233,64 @@ pre {
 
 .buttons button {
   margin: 2px; /* Ajuste conforme necessário */
+}
+
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#loadingOverlay p {
+  margin-top: 10px;
+  font-size: 18px;
+  color: #333;
+}
+.buttons button.btn-disabled {
+  pointer-events: none; /* Desabilita interações com o botão */
+}
+
+.buttons button.btn-disabled::after {
+  content: attr(title); /* Exibe o conteúdo do title como tooltip */
+  position: absolute;
+  background-color: #333;
+  color: #fff;
+  padding: 5px;
+  border-radius: 5px;
+  top: -30px; /* Posiciona o tooltip acima do botão */
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.buttons button.btn-disabled:hover::after {
+  opacity: 1; /* Mostra o tooltip ao passar o mouse */
 }

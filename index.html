@@ -36,28 +36,35 @@ SOFTWARE.
   <body>
     <div class="container">
       <h1>AFD Expert 671</h1>
+
+      <div id="loadingOverlay" style="display: none">
+        <div class="loading-spinner"></div>
+        <p>Carregando...</p>
+      </div>
+
       <form id="uploadForm" enctype="multipart/form-data">
         <label for="file" class="label-file">Escolher arquivo</label>
         <input type="file" id="file" name="file" required onchange="updateFileName()" />
         <span id="file-name">Nenhum arquivo selecionado</span>
         <br />
         <div class="button-group">
-          <button type="submit">Listar</button>
-          <button type="button" onclick="clearFile()">Limpar</button>
+          <button type="submit" class="btn-listar">Listar</button>
+          <button type="button" class="btn-limpar" onclick="clearFile()">Limpar</button>
         </div>
+        <br />
       </form>
 
       <div class="buttons">
-        <button data-tooltip="Exibe detalhes do arquivo ou registro" onclick="showDetails()">Detalhes</button>
-        <button data-tooltip="Mostrar todos os registros" onclick="filterByType('all')">Todos</button>
-        <button data-tooltip="Registros do tipo 2 (Identificação da empresa no REP)" onclick="filterByType('2')">Tipo 2</button>
-        <button data-tooltip="Registros do tipo 3 (Marcação de ponto para REP-C e REP-A)" onclick="filterByType('3')">Tipo 3</button>
-        <button data-tooltip="Registros do tipo 4 (Ajuste do relógio)" onclick="filterByType('4')">Tipo 4</button>
-        <button data-tooltip="Registros do tipo 5 (Inclusão, alteração ou exclusão de empregado no REP)" onclick="filterByType('5')">Tipo 5</button>
-        <button data-tooltip="Registros do tipo 6 (Eventos sensíveis do REP)" onclick="filterByType('6')">Tipo 6</button>
-        <button data-tooltip="Linhas que não atendem a nenhum tipo" onclick="filterInvalidLines()">Linhas inválidas</button>
-        <button data-tooltip="Mostrar interpretação detalhada das linhas" onclick="showInterpretedLines()">Linhas interpretadas</button>
-        <button data-tooltip="Pesquisar dentro do arquivo carregado" onclick="toggleSearch()">Pesquisar</button>
+        <button data-tooltip="Exibe detalhes do arquivo ou registro" onclick="showDetails()" disabled class="btn-disabled">Detalhes</button>
+        <button data-tooltip="Mostrar todos os registros" onclick="filterByType('all')" disabled class="btn-disabled">Todos</button>
+        <button data-tooltip="Registros do tipo 2 (Identificação da empresa no REP)" onclick="filterByType('2')" disabled class="btn-disabled">Tipo 2</button>
+        <button data-tooltip="Registros do tipo 3 (Marcação de ponto para REP-C e REP-A)" onclick="filterByType('3')" disabled class="btn-disabled">Tipo 3</button>
+        <button data-tooltip="Registros do tipo 4 (Ajuste do relógio)" onclick="filterByType('4')" disabled class="btn-disabled">Tipo 4</button>
+        <button data-tooltip="Registros do tipo 5 (Inclusão, alteração ou exclusão de empregado no REP)" onclick="filterByType('5')" disabled class="btn-disabled">Tipo 5</button>
+        <button data-tooltip="Registros do tipo 6 (Eventos sensíveis do REP)" onclick="filterByType('6')" disabled class="btn-disabled">Tipo 6</button>
+        <button data-tooltip="Linhas que não atendem a nenhum tipo" onclick="filterInvalidLines()" disabled class="btn-disabled">Linhas inválidas</button>
+        <button data-tooltip="Mostrar interpretação detalhada das linhas" onclick="showInterpretedLines()" disabled class="btn-disabled">Linhas interpretadas</button>
+        <button data-tooltip="Pesquisar dentro do arquivo carregado" onclick="toggleSearch()" disabled class="btn-disabled">Pesquisar</button>
       </div>
 
       <h2>Resultado</h2>
@@ -102,21 +109,37 @@ SOFTWARE.
         return datePart && timePart ? `${datePart.split('-').reverse().join('/')} ${timePart.substring(0, 8)}` : 'Inválido';
       }
 
-      // Upload completo
       document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        showLoading();
+
         const formData = new FormData();
         formData.append('file', dom.fileInput.files[0]);
 
         try {
-          const response = await fetch('http://10.1.2.28:56000/upload', {
+          const response = await fetch('processar_afd.php', {
             method: 'POST',
             body: formData,
           });
+
+          if (!response.ok) {
+            throw new Error('Erro ao processar o arquivo');
+          }
+
           registrosData = await response.json();
           displayResult(registrosData.registros);
+
+          // Habilitar os botões
+          document.querySelectorAll('.buttons button').forEach((button) => {
+            button.disabled = false;
+            button.classList.remove('btn-disabled');
+            button.removeAttribute('title');
+          });
         } catch (error) {
           console.error('Erro:', error);
+          alert('Erro ao processar o arquivo: ' + error.message);
+        } finally {
+          hideLoading();
         }
       });
 
@@ -132,9 +155,14 @@ SOFTWARE.
         dom.resultado.textContent = chunks.join('');
       }
 
-      // Funções de filtro completas
       function filterByType(tipo) {
-        dom.searchArea.style.display = 'none';
+        if (!registrosData || !registrosData.registros) {
+          alert('Por favor, carregue um arquivo antes de usar os filtros.');
+          return;
+        }
+
+        dom.searchArea.style.display = 'none'; // Oculta a área de pesquisa
+        dom.searchInput.value = ''; // Limpa o campo de pesquisa
         const filteredData = tipo === 'all' ? registrosData.registros : { [tipo]: registrosData.registros[tipo] || [] };
         displayResult(filteredData);
       }
@@ -216,6 +244,8 @@ Razão social: ${registrosData.ultimaAlteracaoEmpresa.razaoSocial}
       }
 
       function showInterpretedLines() {
+        showLoading(); // Mostra o overlay de carregamento
+        dom.searchArea.style.display = 'none'; // Oculta a área de pesquisa
         if (!registrosData?.registros) return;
 
         const todasLinhas = Object.values(registrosData.registros)
@@ -228,6 +258,8 @@ Razão social: ${registrosData.ultimaAlteracaoEmpresa.razaoSocial}
             return interpretarLinha(linha, tipo);
           })
           .join('\n');
+
+        hideLoading(); // Oculta o overlay de carregamento
       }
 
       function interpretarLinha(linha, tipo) {
@@ -280,12 +312,31 @@ Razão social: ${registrosData.ultimaAlteracaoEmpresa.razaoSocial}
         dom.fileName.textContent = 'Nenhum arquivo selecionado';
         dom.resultado.textContent = '';
         registrosData = {};
+
+        // Oculta a área de pesquisa e limpa o campo de pesquisa
+        dom.searchArea.style.display = 'none';
+        dom.searchInput.value = '';
+
+        // Desabilitar os botões e adicionar o tooltip
+        document.querySelectorAll('.buttons button').forEach((button) => {
+          button.disabled = true;
+          button.classList.add('btn-disabled');
+          button.setAttribute('title', 'Carregue o arquivo primeiramente'); // Adiciona o tooltip
+        });
       }
 
       // Event listeners
       dom.searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') performSearch();
       });
+
+      function showLoading() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+      }
+
+      function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+      }
     </script>
   </body>
 </html>

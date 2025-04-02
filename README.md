@@ -34,19 +34,11 @@ O projeto consiste em uma aplicação web que permite o upload de um arquivo AFD
 - Clique em "Detalhes" para ver informações gerais sobre o arquivo.
 - Para limpar o arquivo e os resultados, clique em "Limpar".
 
-### Pré-requisitos
-
-- Node.js instalado (versão 12 ou superior).
-- NPM ou Yarn para gerenciamento de dependências.
-
 ### Tecnologias Utilizadas
 
 - HTML/CSS: Para a interface web.
 - JavaScript: Para a lógica de frontend e interação com o usuário.
-- Node.js: Para o backend que processa o arquivo AFD.
-- Express.js: Framework para criação do servidor.
-- Multer: Middleware para upload de arquivos.
-- iconv-lite: Biblioteca para conversão de codificação de caracteres.
+- PHP: Para o backend que processa o arquivo AFD.
 
 ### Instalação
 
